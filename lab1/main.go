@@ -136,20 +136,17 @@ func uploadDocHandler(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	// Формуємо відповідь
 	docNames := []string{}
 	for _, d := range state.Documents {
 		docNames = append(docNames, d.Name)
 	}
 
-	// Створюємо структуру відповіді
 	response := map[string]interface{}{
 		"documents": docNames,
 		"errors":    errorMessages,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	// Повертаємо 200 OK, навіть якщо були помилки, бо сервер обробив запит коректно
 	json.NewEncoder(w).Encode(response)
 }
 
