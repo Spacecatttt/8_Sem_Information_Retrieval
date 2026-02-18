@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boolean Search System</title>
+    <style>
+        :root {
+            --bg-body: #1e1e1e;
+            --bg-container: #252526;
+            --bg-input: #3c3c3c;
+            --text-main: #d4d4d4;
+            --text-muted: #cccccc;
+            --border-color: #3e3e42;
+            --accent-blue: #007acc;
+            --accent-hover: #0062a3;
+            --danger-red: #f14c4c;
+            --danger-bg: #5a1d1d;
+            --success-green: #4ec9b0;
+            --success-bg: #1e3a2a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            line-height: 1.6;
+        }
+
+        h1,
+        h2 {
+            color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* Section Styles */
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-container);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Inputs & Textarea */
+        textarea,
+        input[type="text"] {
+            width: 100%;
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Courier New', monospace;
+            /* Code font */
+            font-size: 14px;
+        }
+
+        textarea:focus,
+        input[type="text"]:focus {
+            outline: 1px solid var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* Drag and Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 4px;
+            padding: 30px;
+            text-align: center;
+            color: var(--text-muted);
+            background-color: #2d2d2d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--accent-blue);
+            background: #2a2d2e;
+            /* Slightly lighter on drag */
+        }
+
+        /* File List */
+        .file-list {
+            margin-top: 15px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .file-list li {
+            background: var(--bg-input);
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            font-size: 0.9em;
+            color: var(--text-main);
+            font-family: monospace;
+        }
+
+        /* Buttons */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px 16px;
+            font-size: 13px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 2px;
+            /* Flatter look */
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Secondary Button */
+        button.secondary {
+            background: #3b5a6a;
+            color: #cccccc;
+            border: 1px solid #454545;
+        }
+
+        button.secondary:hover {
+            background: #253842;
+        }
+
+        /* Danger Button */
+        button.danger {
+            background: #a30909;
+            color: #ffffff;
+        }
+
+        button.danger:hover {
+            background: #720606;
+        }
+
+        /* Messages */
+        .error {
+            color: #f8d7da;
+            background: var(--danger-bg);
+            border: 1px solid #842029;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success {
+            color: #d4edda;
+            background: var(--success-bg);
+            border: 1px solid #0f5132;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #searchResults {
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-blue);
+            min-height: 50px;
+            color: var(--text-main);
+            font-family: monospace;
+        }
+
+        #termsStatus {
+            margin-top: 5px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="section">
+        <h2>1. Index Terms</h2>
+        <p>Enter terms separated by spaces:</p>
+
+        <textarea id="termsInput" placeholder="example: fox dog wolf..."></textarea>
+
+        <div class="input-group" style="margin-top: 10px;">
+            <input type="file" id="termsFile" accept=".txt" hidden>
+            <button class="secondary" onclick="document.getElementById('termsFile').click()">Load from File</button>
+            <button class="danger" onclick="clearTerms()">Clear Terms</button>
+        </div>
+        <div id="termsStatus" style="font-size: 0.8em; color: green; height: 20px;"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Document Collection</h2>
+        <p>Drag & drop text files here, or click to select:</p>
+
+        <div class="drop-zone" id="dropZone">
+            <span>Drag files here or click to select files/directory</span>
+            <input type="file" id="fileInput" multiple hidden>
+            <input type="file" id="dirInput" webkitdirectory directory hidden>
+        </div>
+
+        <div class="input-group" style="justify-content: center; margin-top: 10px;">
+            <button class="secondary" onclick="document.getElementById('fileInput').click()">Select Files</button>
+            <button class="secondary" onclick="document.getElementById('dirInput').click()">Select Directory</button>
+            <button class="danger" onclick="clearDocuments()">Clear All Documents</button>
+        </div>
+
+        <h4>Uploaded Documents:</h4>
+        <ul id="docList" class="file-list">
+            <li style="color: #999;">No documents uploaded yet.</li>
+        </ul>
+        <div id="docError" class="error"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Search</h2>
+        <div class="input-group">
+            <input type="text" id="queryInput" placeholder="Enter boolean query (e.g., fox AND dog)"
+                style="flex: 1; padding: 8px;">
+            <button onclick="performSearch()">Search</button>
+        </div>
+
+        <div id="searchError" class="error"></div>
+        <div id="searchResults">Results will appear here...</div>
+    </div>
+
+    <script>
+        // TERMS LOGIC
+        const termsInput = document.getElementById('termsInput');
+
+        // Auto-grow textarea
+        termsInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Save on blur
+        termsInput.addEventListener('blur', function () {
+            fetch('/api/update-terms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ raw_terms: this.value })
+            }).then(() => {
+                const status = document.getElementById('termsStatus');
+                status.textContent = "Terms saved successfully.";
+                setTimeout(() => status.textContent = "", 2000);
+            });
+        });
+
+        // Load Terms from File
+        document.getElementById('termsFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                // Append text to existing content
+                termsInput.value += (termsInput.value ? " " : "") + e.target.result;
+                termsInput.dispatchEvent(new Event('input'));
+                termsInput.dispatchEvent(new Event('blur'));
+            };
+            reader.readAsText(file);
+            this.value = '';
+        });
+
+        function clearTerms() {
+            termsInput.value = '';
+            termsInput.dispatchEvent(new Event('input')); // resize
+            termsInput.dispatchEvent(new Event('blur'));  // save empty state
+        }
+
+        // DOCUMENTS LOGIC
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const dirInput = document.getElementById('dirInput');
+
+        // Drag & Drop visual effects
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+        // Handle file drop
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Handle file selection
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        dirInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            const formData = new FormData();
+            let count = 0;
+
+            for (let file of files) {
+                // Only process text files
+                if (file.name.endsWith('.txt') || file.type === 'text/plain') {
+                    formData.append('documents', file);
+                    count++;
+                }
+            }
+
+            if (count === 0) {
+                showError('docError', "No .txt files found in selection.");
+                return;
+            }
+
+            // Upload to server
+            fetch('/api/upload-doc', {
+                method: 'POST',
+                body: formData
+            })
+                .then(async response => {
+                    if (!response.ok) {
+                        const text = await response.text();
+                        throw new Error(text);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateDocList(data.documents);
+                    if (data.errors && data.errors.length > 0) {
+                        showError('docError', "Some files were skipped:\n" + data.errors.join("\n"));
+                    } else {
+                        showError('docError', null);
+                    }
+                })
+                .catch(err => {
+                    showError('docError', err.message);
+                });
+
+            // Clear inputs
+            fileInput.value = '';
+            dirInput.value = '';
+        }
+
+        function updateDocList(names) {
+            const list = document.getElementById('docList');
+            list.innerHTML = '';
+
+            if (!names || names.length === 0) {
+                const li = document.createElement('li');
+                li.style.color = '#999';
+                li.textContent = 'No documents uploaded yet.';
+                list.appendChild(li);
+                return;
+            }
+
+            names.forEach(name => {
+                const li = document.createElement('li');
+                li.textContent = name;
+                list.appendChild(li);
+            });
+        }
+
+        function clearDocuments() {
+            fetch('/api/clear-docs', { method: 'POST' })
+                .then(() => {
+                    updateDocList([]);
+                    showError('docError', null);
+                });
+        }
+
+        // SEARCH LOGIC
+        function performSearch() {
+            const query = document.getElementById('queryInput').value;
+            const errorDiv = document.getElementById('searchError');
+            const resultsDiv = document.getElementById('searchResults');
+
+            errorDiv.style.display = 'none';
+            resultsDiv.innerHTML = 'Searching...';
+
+            fetch('/api/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query })
+            })
+                .then(async response => {
+                    if (!response.ok) {
+                        const text = await response.text();
+                        throw new Error(text);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    resultsDiv.innerHTML = '';
+
+                    if (data.length === 0) {
+                        resultsDiv.innerHTML = '<p style="color: #666;">No documents match your query.</p>';
+                        return;
+                    }
+
+                    const header = document.createElement('p');
+                    header.innerHTML = `<strong>Found ${data.length} document(s):</strong>`;
+                    resultsDiv.appendChild(header);
+
+                    const ul = document.createElement('ul');
+                    ul.style.listStyleType = 'none';
+                    ul.style.padding = '0';
+
+                    data.forEach(fileName => {
+                        const li = document.createElement('li');
+                        li.style.padding = '5px 0';
+                        li.textContent = fileName;
+                        ul.appendChild(li);
+                    });
+
+                    resultsDiv.appendChild(ul);
+                })
+                .catch(err => {
+                    resultsDiv.innerHTML = '';
+                    errorDiv.textContent = err.message;
+                    errorDiv.style.display = 'block';
+                });
+        }
+
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            if (message) {
+                el.textContent = message;
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

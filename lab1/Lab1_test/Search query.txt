@@ -1,0 +1,8 @@
+computer and internet 			doc1.txt
+fox or jupiter				doc2.txt, doc3.txt
+moon and not(dog)			doc3.txt
+fox and wolf or mars and planets	doc2.txt, doc3.txt
+sport and healthy or data and science	doc4.txt, doc1.txt
+
+^(?=.*computer)(?=.*internet)
+fox|jupiter
