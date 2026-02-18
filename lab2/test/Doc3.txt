@@ -1,0 +1,1 @@
+programming involves designing and building an executable computer program to accomplish a specific computing result or to perform a specific task our laboratory work focuses on the implementation of a search engine using the go programming language and algebraic models for document representation

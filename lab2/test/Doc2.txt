@@ -1,0 +1,1 @@
+the vector space model is an algebraic model for representing text documents as vectors of identifiers such as index terms it is used in information filtering information retrieval indexing and relevancy rankings this model represents documents as points in a high dimensional space

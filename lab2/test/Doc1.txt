@@ -1,0 +1,1 @@
+information retrieval is the process of obtaining information system resources that are relevant to an information need from a collection of those resources search can be based on full text or other content based indexing search systems are everywhere today and help users find data effectively across the web

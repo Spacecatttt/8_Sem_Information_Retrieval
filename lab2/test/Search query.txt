@@ -1,0 +1,5 @@
+information retrieval       doc1.txt, doc2.txt
+vector space model          doc2.txt
+programming language task   doc3.txt
+data algorithms systems     doc4.txt, doc1.txt
+search indexing             doc1.txt, doc3.txt, doc2.txt
