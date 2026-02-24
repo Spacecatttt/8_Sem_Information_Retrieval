@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Elastic Games DB</title>
+    <style>
+        :root {
+            --bg: #1e1e1e;
+            --cont: #252526;
+            --text: #d4d4d4;
+            --blue: #007acc;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .section {
+            background: var(--cont);
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #3e3e42;
+        }
+
+        input,
+        select {
+            background: #3c3c3c;
+            color: white;
+            border: 1px solid #3e3e42;
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            background: var(--blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .result-card {
+            background: #2d2d2d;
+            padding: 15px;
+            border-left: 4px solid var(--blue);
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .controls {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="section">
+        <h2>Management</h2>
+        <input type="hidden" id="gameId">
+        <div class="grid">
+            <input type="text" id="title" placeholder="Game Title">
+            <input type="text" id="developer" placeholder="Developer / Author">
+            <input type="text" id="genres" placeholder="Genres (comma separated: action, rpg, open-world)">
+            <input type="number" id="year" placeholder="Release Year">
+            <input type="number" step="0.1" min="0" max="10" id="rating" placeholder="Rating (0-10)">
+        </div>
+        <div style="margin-top: 10px;">
+            <button onclick="saveGame()">Save Game</button>
+            <button style="background:#555" onclick="resetForm()">Clear Form</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Search Filters</h2>
+        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <select id="searchType" onchange="ui()">
+                <option value="term">Term</option>
+                <option value="range">Range</option>
+                <option value="regexp">Regexp</option>
+            </select>
+            <select id="searchField">
+                <option value="title">Title</option>
+                <option value="developer">Developer</option>
+                <option value="genre">Genre</option>
+                <option value="release_year">Year</option>
+                <option value="rating">Rating</option>
+            </select>
+            <div id="singleVal"><input type="text" id="searchValue" placeholder="Value or regexp"></div>
+            <div id="dualVal" style="display:none; gap: 5px;">
+                <input type="number" id="min" placeholder="Min">
+                <input type="number" id="max" placeholder="Max">
+            </div>
+        </div>
+        <button onclick="search()" style="margin-top: 10px; width: 100%;">Search Documents</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        window.onload = () => {
+            search('all');
+        };
+
+        function ui() {
+            const type = document.getElementById('searchType').value;
+            document.getElementById('singleVal').style.display = type === 'range' ? 'none' : 'block';
+            document.getElementById('dualVal').style.display = type === 'range' ? 'flex' : 'none';
+        }
+
+        async function saveGame() {
+            const id = document.getElementById('gameId').value;
+            const data = {
+                id: id,
+                title: document.getElementById('title').value,
+                developer: document.getElementById('developer').value,
+                genre: document.getElementById('genres').value.split(',').map(s => s.trim()).filter(s => s !== ""),
+                release_year: parseInt(document.getElementById('year').value) || 0,
+                rating: parseFloat(document.getElementById('rating').value) || 0
+            };
+
+            const url = id ? '/api/games/update' : '/api/games/add';
+            await fetch(url, { method: 'POST', body: JSON.stringify(data) });
+            resetForm();
+            await new Promise(r => setTimeout(r, 400));
+            search('all'); // Refresh list after saving
+        }
+
+        async function search(forceType) {
+            let payload = {};
+
+            if (forceType === 'all') {
+                payload = { type: 'all' };
+            } else {
+                payload = {
+                    type: document.getElementById('searchType').value,
+                    field: document.getElementById('searchField').value,
+                    value: document.getElementById('searchValue').value,
+                    min: document.getElementById('min').value,
+                    max: document.getElementById('max').value
+                };
+            }
+
+            try {
+                const resp = await fetch('/api/games/search', { method: 'POST', body: JSON.stringify(payload) });
+
+                if (!resp.ok) {
+                    const errText = await resp.text();
+                    document.getElementById('results').innerHTML = `<p style="color: red;">Error: ${errText}</p>`;
+                    return;
+                }
+
+                const games = await resp.json();
+
+                let html = '';
+                (games || []).forEach(g => {
+                    html += `<div class="result-card">
+                        <strong>${g.title}</strong> by ${g.developer || 'Unknown'}<br>
+                        <small>Genres: ${(g.genre || []).join(', ')} | Year: ${g.release_year} | Rating: ${g.rating}</small>
+                        <div class="controls">
+                            <button style="background:#28a745" onclick='editGame(${JSON.stringify(g)})'>Edit</button>
+                            <button style="background:#dc3545" onclick="del('${g.id}')">Delete</button>
+                        </div>
+                    </div>`;
+                });
+                document.getElementById('results').innerHTML = html || '<p>No results found.</p>';
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<p style="color: red;">Failed to connect to server.</p>`;
+            }
+        }
+
+        function editGame(g) {
+            document.getElementById('gameId').value = g.id;
+            document.getElementById('title').value = g.title || "";
+            document.getElementById('developer').value = g.developer || "";
+            document.getElementById('genres').value = (g.genre || []).join(', ');
+            document.getElementById('year').value = g.release_year || "";
+            document.getElementById('rating').value = g.rating || "";
+            window.scrollTo(0, 0);
+        }
+
+        async function del(id) {
+            await fetch('/api/games/delete?id=' + id, { method: 'DELETE' });
+            search('all');
+        }
+
+        function resetForm() {
+            document.getElementById('gameId').value = '';
+            document.querySelectorAll('.section input').forEach(i => i.value = '');
+        }
+    </script>
+</body>
+
+</html>
